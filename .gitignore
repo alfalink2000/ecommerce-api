@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets - NEVER commit these
+.env
+.env.*
+
+# Database (local sqlite file)
+*.db
+*.sqlite
+*.sqlite3
+
+# Test / cache artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+Thumbs.db
+.DS_Store

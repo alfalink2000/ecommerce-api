@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce API - Instructivo</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .token-state-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .token-state-item {
+            background: var(--bg);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .token-state-label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .token-state-value {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .token-expiring { color: var(--danger); }
+
+        #api-console,
+        .api-console {
+            background: #1e1e2e;
+            border-radius: 10px;
+            padding: 12px;
+            max-height: 320px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        .api-console-sm {
+            max-height: 260px;
+        }
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+        .log-time {
+            color: #6c7086;
+            font-size: 11px;
+        }
+        .log-method {
+            font-weight: 700;
+            min-width: 50px;
+        }
+        .log-url {
+            color: #89dceb;
+        }
+        .log-status {
+            color: #a6e3a1;
+            font-size: 11px;
+        }
+        .log-badge {
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+        .log-badge-auth {
+            background: rgba(249, 226, 175, 0.15);
+            color: #f9e2af;
+        }
+        .log-details {
+            width: 100%;
+            margin-top: 2px;
+        }
+        .log-details summary {
+            color: #6c7086;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .log-details pre {
+            background: rgba(0,0,0,0.3);
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-top: 2px;
+            color: #cdd6f4;
+            font-size: 11px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .log-empty,
+        .console-empty {
+            color: #6c7086;
+            text-align: center;
+            padding: 20px;
+        }
+        .log-token .log-method { color: #f9e2af; }
+        .log-token .log-url { color: #f9e2af; font-weight: 600; }
+        .log-token .log-status { color: #cdd6f4; }
+
+        .info-box {
+            background: linear-gradient(135deg, #667eea11, #764ba211);
+            border: 1px solid #667eea33;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text);
+        }
+        .info-box h4 {
+            color: var(--info);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .info-box code {
+            background: rgba(0,0,0,0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--danger);
+        }
+        .info-box ul {
+            margin: 8px 0 0 16px;
+        }
+        .info-box li {
+            margin-bottom: 4px;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+        .flow-step {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .flow-arrow {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 900px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h1>E-Commerce API</h1>
+        <p>Proyecto Instructivo FastAPI</p>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section">Autenticacion</div>
+        <div class="nav-item active" data-nav="auth">
+            <span class="icon">🔑</span> Login / Registro
+        </div>
+        <div class="nav-item" data-nav="tokens">
+            <span class="icon">🎫</span> Estado de Tokens
+        </div>
+
+        <div class="nav-section">Tienda</div>
+        <div class="nav-item" data-nav="products">
+            <span class="icon">📦</span> Productos
+        </div>
+        <div class="nav-item" data-nav="orders">
+            <span class="icon">🛒</span> Ordenes
+        </div>
+
+        <div class="nav-section nav-admin">Administracion</div>
+        <div class="nav-item nav-admin" data-nav="users">
+            <span class="icon">👥</span> Usuarios
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-badge">
+            <div class="user-avatar">?</div>
+            <div class="user-info">
+                <div class="user-name">Sin sesion</div>
+                <span class="user-role role-none">no autenticado</span>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+    <div id="role-banner" style="display:none"></div>
+
+    <!-- AUTH SECTION -->
+    <div id="section-auth" class="section active">
+        <div class="page-header">
+            <h2>Autenticacion</h2>
+            <p>Registrarse e iniciar sesion para obtener tokens JWT</p>
+        </div>
+
+        <div class="info-box">
+            <h4>Como funciona la autenticacion en esta API</h4>
+            <p>La API usa <strong>JWT (JSON Web Tokens)</strong> con dos tipos de token:</p>
+            <ul>
+                <li><code>access_token</code> - Valida por 30 minutos. Se envia en el header <code>Authorization: Bearer &lt;token&gt;</code> para acceder a rutas protegidas.</li>
+                <li><code>refresh_token</code> - Valida por 7 dias. Se usa para obtener un nuevo access_token sin volver a loguearse.</li>
+            </ul>
+            <div class="flow-diagram">
+                <span class="flow-step">1. POST /register</span>
+                <span class="flow-arrow">→</span>
+                <span class="flow-step">2. POST /login</span>
+                <span class="flow-arrow">→</span>
+                <span class="flow-step">3. Recibes tokens</span>
+                <span class="flow-arrow">→</span>
+                <span class="flow-step">4. Usas Bearer en header</span>
+            </div>
+            <p><strong>Middleware:</strong> Antes de cada peticion, el middleware verifica que el access_token exista en Redis. Si no existe o expiro, devuelve 401.</p>
+        </div>
+
+        <div class="two-col">
+            <div class="card">
+                <div class="card-title">Iniciar Sesion</div>
+                <form id="login-form">
+                    <div class="alert-box"></div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" placeholder="admin@test.com" required>
+                    </div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label>Contrasena</label>
+                        <input type="password" name="password" placeholder="123456" required>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">Entrar</button>
+                        <button id="refresh-btn" type="button" class="btn btn-outline">Refrescar Token</button>
+                        <button id="logout-btn" type="button" class="btn btn-danger">Cerrar Sesion</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Registrar Usuario</div>
+                <form id="register-form">
+                    <div class="alert-box"></div>
+                    <div class="form-group">
+                        <label>Nombre completo</label>
+                        <input type="text" name="full_name" placeholder="Juan Perez" required>
+                    </div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label>Email</label>
+                        <input type="email" name="email" placeholder="juan@test.com" required>
+                    </div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label>Contrasena</label>
+                        <input type="password" name="password" placeholder="123456" required>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-success">Crear Cuenta</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:20px">
+            <div class="card-title">Consola de Peticiones HTTP</div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
+                Cada accion que realices se registra aqui mostrando el metodo HTTP, URL, headers enviados y respuesta del servidor.
+            </p>
+            <div id="api-console" class="api-console api-console-sm">
+                <div class="log-empty">Realiza una accion (login, registro, etc.) para ver las peticiones HTTP aqui.</div>
+            </div>
+            <div class="btn-group">
+                <button id="clear-console" class="btn btn-sm btn-outline">Limpiar Consola</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOKEN STATE SECTION -->
+    <div id="section-tokens" class="section">
+        <div class="page-header">
+            <h2>Estado de Tokens</h2>
+            <p>Visualiza el estado actual de tus tokens JWT y como se manejan internamente</p>
+        </div>
+
+        <div class="info-box">
+            <h4>Flujo de vida de un Token JWT</h4>
+            <ul>
+                <li><strong>Creacion:</strong> Al hacer login, el servidor genera access_token (30min) y refresh_token (7 dias). Ambos se guardan en Redis.</li>
+                <li><strong>Uso:</strong> En cada peticion protegida, el middleware envia el access_token a Redis para verificar que sigue activo.</li>
+                <li><strong>Refresh:</strong> Cuando el access_token expira, se envia el refresh_token para obtener uno nuevo. El viejo se borra de Redis.</li>
+                <li><strong>Logout:</strong> Ambos tokens se borran de Redis, invalidando la sesion.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Tu Token Actual</div>
+            <div id="token-state">
+                <div class="alert alert-info" style="margin:0">
+                    No hay sesion activa. Inicia sesion para obtener tokens.
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Estructura del JWT (Payload)</div>
+            <div style="font-size:13px;line-height:1.8">
+                <p>Un JWT tiene 3 partes separadas por puntos: <code>header.payload.signature</code></p>
+                <p>El <strong>payload</strong> contiene:</p>
+                <ul style="margin:8px 0 0 20px">
+                    <li><code>sub</code> - ID del usuario (dueño del token)</li>
+                    <li><code>exp</code> - Timestamp de expiracion (Unix)</li>
+                    <li><code>type</code> - "access" o "refresh"</li>
+                </ul>
+                <p style="margin-top:8px">El servidor valida la firma con <code>SECRET_KEY</code> para asegurar que nadie lo falsifique.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCTS SECTION -->
+    <div id="section-products" class="section">
+        <div class="page-header">
+            <h2>Productos</h2>
+            <p>Catalogo de productos. GET es publico, POST/PATCH/DELETE requieren rol admin.</p>
+        </div>
+
+        <div class="info-box">
+            <h4>Control de acceso en Productos</h4>
+            <div class="probe-list">
+                <div class="probe-item">
+                    <div class="probe-desc"><code>GET /products/</code> - Publico. Cualquiera puede ver los productos (no necesita token).</div>
+                    <button class="probe-btn" data-probe="products_get">Probar</button>
+                </div>
+                <div class="probe-item">
+                    <div class="probe-desc"><code>POST /products/</code> - Solo admin. El middleware verifica el token, luego <code>require_admin()</code> verifica que el rol en el JWT sea "admin".</div>
+                    <button class="probe-btn" data-probe="products_post">Probar</button>
+                </div>
+                <div class="probe-item">
+                    <div class="probe-desc"><code>PUT /products/{id}</code> - Solo admin.</div>
+                    <button class="probe-btn" data-probe="products_put">Probar</button>
+                </div>
+                <div class="probe-item">
+                    <div class="probe-desc"><code>DELETE /products/{id}</code> - Solo admin.</div>
+                    <button class="probe-btn" data-probe="products_delete">Probar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="admin-product-form" style="display:none">
+            <div class="card-title">Crear Producto (solo admin)</div>
+            <div id="create-product-alert"></div>
+            <form id="create-product-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" name="name" placeholder="Laptop Gamer" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio ($)</label>
+                        <input type="number" name="price" step="0.01" placeholder="999.99" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" name="stock" placeholder="10" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <input type="text" name="category" placeholder="tecnologia">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Descripcion</label>
+                        <input type="text" name="description" placeholder="Laptop gamer 16GB RAM">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Crear Producto</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Lista de Productos</div>
+            <div id="products-list">Cargando...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+                <span>Consola de Peticiones HTTP</span>
+                <button class="btn btn-outline btn-sm" onclick="clearConsole()">Limpiar</button>
+            </div>
+            <div id="api-console-products" class="api-console api-console-sm">
+                <div class="console-empty">Aun no hay peticiones. Pulsa "Probar" o usa los formularios para ver cada request/response aqui.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ORDERS SECTION -->
+    <div id="section-orders" class="section">
+        <div class="page-header">
+            <h2>Ordenes</h2>
+            <p>Gestion de ordenes de compra. Todas las operaciones requieren token JWT.</p>
+        </div>
+
+        <div class="info-box">
+            <h4>Control de acceso en Ordenes</h4>
+            <div class="probe-list">
+                <div class="probe-item">
+                    <div class="probe-desc"><code>POST /orders/</code> - Cualquier usuario logueado puede crear ordenes.</div>
+                    <button class="probe-btn" data-probe="orders_post">Probar</button>
+                </div>
+                <div class="probe-item">
+                    <div class="probe-desc"><code>GET /orders/</code> - Solo ves tus propias ordenes (filtrado por user_id del token).</div>
+                    <button class="probe-btn" data-probe="orders_get">Probar</button>
+                </div>
+                <div class="probe-item">
+                    <div class="probe-desc"><code>POST /orders/{id}/cancel</code> - Solo el dueño puede cancelar su orden.</div>
+                    <button class="probe-btn" data-probe="orders_cancel">Probar</button>
+                </div>
+                <div class="probe-item">
+                    <div class="probe-desc"><code>PUT /orders/{id}/status</code> - Solo admin puede cambiar el estado.</div>
+                    <button class="probe-btn" data-probe="orders_status">Probar</button>
+                </div>
+            </div>
+            <p style="margin-top:8px"><strong>Nota:</strong> El router usa <code>get_current_user()</code> que extrae el user_id del token JWT y lo usa para filtrar las ordenes.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Crear Orden</div>
+            <div id="create-order-alert"></div>
+            <form id="create-order-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>ID del Producto</label>
+                        <input type="number" name="product_id" placeholder="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" name="quantity" placeholder="2" min="1" required>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Crear Orden</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Mis Ordenes</div>
+            <div id="orders-list">Cargando...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+                <span>Consola de Peticiones HTTP</span>
+                <button class="btn btn-outline btn-sm" onclick="clearConsole()">Limpiar</button>
+            </div>
+            <div id="api-console-orders" class="api-console api-console-sm">
+                <div class="console-empty">Aun no hay peticiones. Pulsa "Probar" o usa los formularios para ver cada request/response aqui.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- USERS SECTION (admin) -->
+    <div id="section-users" class="section">
+        <div class="page-header">
+            <h2>Usuarios</h2>
+            <p>Gestion de usuarios. Solo accesible con rol admin.</p>
+        </div>
+
+        <div class="info-box">
+            <h4>Control de acceso en Usuarios</h4>
+            <div class="probe-list">
+                <div class="probe-item">
+                    <div class="probe-desc"><code>GET /users/</code> - Solo admin. Lista todos los usuarios.</div>
+                    <button class="probe-btn" data-probe="users_get">Probar</button>
+                </div>
+                <div class="probe-item">
+                    <div class="probe-desc"><code>PUT /users/{id}/role</code> - Solo admin. Cambia el rol de un usuario.</div>
+                    <button class="probe-btn" data-probe="users_role">Probar</button>
+                </div>
+                <div class="probe-item">
+                    <div class="probe-desc"><code>DELETE /users/{id}</code> - Solo admin. Elimina un usuario.</div>
+                    <button class="probe-btn" data-probe="users_delete">Probar</button>
+                </div>
+            </div>
+            <p style="margin-top:8px">Si intentas acceder como customer, el servidor devuelve <code>403 Forbidden</code>.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Todos los Usuarios</div>
+            <div id="users-list">Cargando...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+                <span>Consola de Peticiones HTTP</span>
+                <button class="btn btn-outline btn-sm" onclick="clearConsole()">Limpiar</button>
+            </div>
+            <div id="api-console-users" class="api-console api-console-sm">
+                <div class="console-empty">Aun no hay peticiones. Pulsa "Probar" o usa los formularios para ver cada request/response aqui.</div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script src="/static/app.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const isAdmin = JSON.parse(localStorage.getItem('user'))?.role === 'admin';
+        if (isAdmin) {
+            document.getElementById('admin-product-form').style.display = 'block';
+        }
+    });
+
+    const origSaveUser = window.saveUser;
+    window.saveUser = function(user) {
+        origSaveUser(user);
+        document.getElementById('admin-product-form').style.display = user.role === 'admin' ? 'block' : 'none';
+    };
+</script>
+
+</body>
+</html>
