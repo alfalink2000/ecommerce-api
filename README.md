@@ -40,7 +40,37 @@ uv sync
 ```
 
 ### 3. Iniciar Redis
-Asegúrate de tener `redis-server` corriendo en `127.0.0.1:6379`.
+
+La API guarda los tokens JWT activos en Redis. Necesitas un servidor Redis escuchando en `127.0.0.1:6379`. Si no lo tienes, elige una opción:
+
+**Opción A - Binario portable para Windows (la mas rapida, sin instalacion)**
+
+1. Descarga el ZIP de https://github.com/tporadowski/redis/releases (por ej. `Redis-x64-5.0.14.1.zip`)
+2. Extrae en una carpeta y ejecuta:
+   ```powershell
+   .\redis-server.exe
+   ```
+
+**Opción B - Con Docker**
+
+```powershell
+docker run -d --name redis -p 6379:6379 redis
+```
+
+**Opción C - Con WSL / Linux / macOS**
+
+```bash
+sudo apt install redis-server    # Debian/Ubuntu
+redis-server
+```
+En macOS: `brew install redis && redis-server`
+
+Para verificar que Redis responde:
+```powershell
+curl http://127.0.0.1:6379   # debe responder "+PONG" o ERROR de respaldo
+```
+
+> Si Redis no esta disponible, la API **arranca igual** (veras `ADVERTENCIA: Redis no esta disponible`) pero las rutas protegidas (login, tokens, ordenes) no funcionaran hasta que Redis este arriba.
 
 ### 4. Ejecutar la API
 ```powershell
