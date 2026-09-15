@@ -12,6 +12,7 @@ wheels/
 # Secrets - NEVER commit these
 .env
 .env.*
+!.env.example
 
 # Database (local sqlite file)
 *.db
